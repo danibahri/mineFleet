@@ -18,6 +18,9 @@ Route::post('/logout', function () {
 Route::middleware(['auth'])->group(function () {
 
 
+    // ── Global Profile ────────────────────────────────────────────────────────
+    Route::livewire('/profile', 'pages.profile.index')->name('profile');
+
     Route::middleware(['role:admin'])->group(function () {
         Route::livewire('/dashboard', 'pages.dashboard')->name('dashboard');
         Route::livewire('/vehicle-management', 'pages.vechile-management.index')->name('vehicle-management');

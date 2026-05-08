@@ -72,13 +72,18 @@
                 </span>
             </div>
             <flux:menu.separator />
-            <flux:menu.item icon="user-circle" href="#">Profil Saya</flux:menu.item>
-            <flux:menu.separator />
+            <flux:menu.item icon="user-circle" href="{{ route('profile') }}">Profil Saya</flux:menu.item>
 
+            @if (Auth::user()->role->name === 'admin')
+                <flux:menu.item icon="cog-6-tooth" href="{{ route('settings') }}">Settings</flux:sidebar.item>
+            @endif
+
+            <flux:menu.separator />
             {{-- Logout --}}
             <form method="POST" action="{{ route('logout') }}" x-data>
                 @csrf
-                <flux:menu.item icon="arrow-right-start-on-rectangle" class="text-rose-600 dark:text-rose-400" x-on:click="$el.closest('form').submit()">
+                <flux:menu.item icon="arrow-right-start-on-rectangle" class="text-rose-600 dark:text-rose-400"
+                    x-on:click="$el.closest('form').submit()">
                     Logout
                 </flux:menu.item>
             </form>
