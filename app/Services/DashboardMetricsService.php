@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ActivityLog;
 use App\Models\BookingApproval;
 use App\Models\Driver;
 use App\Models\FuelLog;
@@ -16,6 +17,50 @@ use Illuminate\Support\Collection;
 
 class DashboardMetricsService
 {
+    public function dashboardSummary(array $filters): array
+    {
+        $period = $this->period($filters);
+        $previous = [
+            'period_start' => $period['period_start']->subMonthNoOverflow(),
+            'period_end' => $period['period_start']->subSecond(),
+        ];
+
+        $vehicleQuery = $this->vehicleQuery($filters);
+        $bookingQuery = $this->bookingQuery($filters);
+        $fuelQuery = $this->fuelQuery($filters);
+        $driverQuery = $this->driverQuery($filters);
+
+        return [
+            $this->card('Total kendaraan', $vehicleQuery->clone()->count(), $this->percentageChange(
+                $this->vehicleQuery($filters)->whereBetween('created_at', [$period['period_start'], $period['period_end']])->count(),
+                $this->vehicleQuery($filters)->whereBetween('created_at', [$previous['period_start'], $previous['period_end']])->count(),
+            ), 'truck', 'slate'),
+            $this->card('Booking aktif', $this->bookingQuery($filters)
+                ->where('status', 'approved')
+                ->whereBetween('departure_date', [$period['period_start'], $period['period_end']])
+                ->count(), $this->percentageChange(
+                $this->bookingQuery($filters)->where('status', 'approved')->whereBetween('departure_date', [$period['period_start'], $period['period_end']])->count(),
+                $this->bookingQuery($filters)->where('status', 'approved')->whereBetween('departure_date', [$previous['period_start'], $previous['period_end']])->count(),
+            ), 'calendar-days', 'cyan'),
+            $this->card('Pending approval', $this->pendingApprovals($filters)->count(), $this->percentageChange(
+                $this->pendingApprovals($filters)->whereBetween('created_at', [$period['period_start'], $period['period_end']])->count(),
+                $this->pendingApprovals($filters)->whereBetween('created_at', [$previous['period_start'], $previous['period_end']])->count(),
+            ), 'clock', 'amber'),
+            $this->card('Kendaraan service', $this->vehicleQuery($filters)->where('status', 'service')->count(), $this->share(
+                $this->vehicleQuery($filters)->where('status', 'service')->count(),
+                max($this->vehicleQuery($filters)->count(), 1),
+            ), 'wrench-screwdriver', 'orange'),
+            $this->card('Total driver', $driverQuery->clone()->count(), $this->percentageChange(
+                $this->driverQuery($filters)->whereBetween('created_at', [$period['period_start'], $period['period_end']])->count(),
+                $this->driverQuery($filters)->whereBetween('created_at', [$previous['period_start'], $previous['period_end']])->count(),
+            ), 'identification', 'slate'),
+            $this->card('BBM bulan ini', (float) $fuelQuery->clone()->whereBetween('fuel_date', [$period['period_start']->toDateString(), $period['period_end']->toDateString()])->sum('liter'), $this->percentageChange(
+                (float) $this->fuelQuery($filters)->whereBetween('fuel_date', [$period['period_start']->toDateString(), $period['period_end']->toDateString()])->sum('liter'),
+                (float) $this->fuelQuery($filters)->whereBetween('fuel_date', [$previous['period_start']->toDateString(), $previous['period_end']->toDateString()])->sum('liter'),
+            ), 'beaker', 'amber', ' L'),
+        ];
+    }
+
     public function filterOptions(): array
     {
         return [
@@ -110,7 +155,7 @@ class DashboardMetricsService
             'series' => [
                 [
                     'name' => 'Booking kendaraan',
-                    'data' => $this->months()->map(fn (int $month) => (int) ($rows[$month] ?? 0))->all(),
+                    'data' => $this->months()->map(fn(int $month) => (int) ($rows[$month] ?? 0))->all(),
                 ],
             ],
         ];
@@ -126,7 +171,7 @@ class DashboardMetricsService
 
         return [
             'labels' => array_values($labels),
-            'series' => collect(array_keys($labels))->map(fn (string $status) => (int) ($rows[$status] ?? 0))->all(),
+            'series' => collect(array_keys($labels))->map(fn(string $status) => (int) ($rows[$status] ?? 0))->all(),
         ];
     }
 
@@ -145,11 +190,11 @@ class DashboardMetricsService
             'series' => [
                 [
                     'name' => 'Liter BBM',
-                    'data' => $this->months()->map(fn (int $month) => round((float) ($rows[$month]->liters ?? 0), 2))->all(),
+                    'data' => $this->months()->map(fn(int $month) => round((float) ($rows[$month]->liters ?? 0), 2))->all(),
                 ],
                 [
                     'name' => 'Biaya BBM',
-                    'data' => $this->months()->map(fn (int $month) => round(((float) ($rows[$month]->cost ?? 0)) / 1000000, 2))->all(),
+                    'data' => $this->months()->map(fn(int $month) => round(((float) ($rows[$month]->cost ?? 0)) / 1000000, 2))->all(),
                 ],
             ],
         ];
@@ -173,7 +218,7 @@ class DashboardMetricsService
             'series' => [
                 [
                     'name' => 'Jumlah booking',
-                    'data' => $rows->pluck('total')->map(fn ($value) => (int) $value)->all(),
+                    'data' => $rows->pluck('total')->map(fn($value) => (int) $value)->all(),
                 ],
             ],
         ];
@@ -192,15 +237,15 @@ class DashboardMetricsService
                 $query->where(function (Builder $query) use ($search): void {
                     $query->where('booking_code', 'like', "%{$search}%")
                         ->orWhere('purpose', 'like', "%{$search}%")
-                        ->orWhereHas('vehicle', fn (Builder $vehicle) => $vehicle
+                        ->orWhereHas('vehicle', fn(Builder $vehicle) => $vehicle
                             ->where('code', 'like', "%{$search}%")
                             ->orWhere('plate_number', 'like', "%{$search}%")
                             ->orWhere('model', 'like', "%{$search}%"))
-                        ->orWhereHas('driver', fn (Builder $driver) => $driver->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('requester', fn (Builder $user) => $user->where('name', 'like', "%{$search}%"));
+                        ->orWhereHas('driver', fn(Builder $driver) => $driver->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('requester', fn(Builder $user) => $user->where('name', 'like', "%{$search}%"));
                 });
             })
-            ->when($status !== '', fn (Builder $query) => $query->where('status', $status))
+            ->when($status !== '', fn(Builder $query) => $query->where('status', $status))
             ->latest('departure_date');
     }
 
@@ -215,9 +260,38 @@ class DashboardMetricsService
                 'approver:id,name',
             ])
             ->where('booking_approvals.status', 'pending')
-            ->whereHas('booking', fn (Builder $booking) => $this->applyBookingFilters($booking, $filters))
+            ->whereHas('booking', fn(Builder $booking) => $this->applyBookingFilters($booking, $filters))
             ->orderBy('approval_level')
             ->latest();
+    }
+
+    public function approvalMonitoring(array $filters, string $search = '', string $status = ''): Builder
+    {
+        return BookingApproval::query()
+            ->with([
+                'booking:id,booking_code,vehicle_id,driver_id,requester_id,departure_date,return_date,status',
+                'booking.vehicle:id,code,plate_number,brand,model',
+                'booking.driver:id,name',
+                'booking.requester:id,name',
+                'approver:id,name',
+            ])
+            ->when($status !== '', fn(Builder $query) => $query->where('booking_approvals.status', $status))
+            ->when($search !== '', function (Builder $query) use ($search): void {
+                $query->where(function (Builder $query) use ($search): void {
+                    $query->whereHas('booking', function (Builder $booking) use ($search): void {
+                        $booking->where('booking_code', 'like', "%{$search}%")
+                            ->orWhereHas('vehicle', fn(Builder $vehicle) => $vehicle
+                                ->where('code', 'like', "%{$search}%")
+                                ->orWhere('plate_number', 'like', "%{$search}%")
+                                ->orWhere('model', 'like', "%{$search}%"))
+                            ->orWhereHas('driver', fn(Builder $driver) => $driver->where('name', 'like', "%{$search}%"))
+                            ->orWhereHas('requester', fn(Builder $user) => $user->where('name', 'like', "%{$search}%"));
+                    })
+                        ->orWhereHas('approver', fn(Builder $approver) => $approver->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->whereHas('booking', fn(Builder $booking) => $this->applyBookingFilters($booking, $filters))
+            ->latest('booking_approvals.created_at');
     }
 
     public function notifications(array $filters): array
@@ -262,6 +336,42 @@ class DashboardMetricsService
                 'icon' => 'calendar-days',
             ],
         ];
+    }
+
+    public function vehicleUsageTable(array $filters, int $limit = 6): Collection
+    {
+        $period = $this->yearRange($filters);
+
+        return $this->bookingQuery($filters)
+            ->join('vehicles', 'vehicles.id', '=', 'vehicle_bookings.vehicle_id')
+            ->selectRaw('vehicles.id, vehicles.code, vehicles.plate_number, vehicles.model, COUNT(vehicle_bookings.id) as total_usage, MAX(vehicle_bookings.departure_date) as last_used')
+            ->whereBetween('vehicle_bookings.departure_date', [$period['start'], $period['end']])
+            ->groupBy('vehicles.id', 'vehicles.code', 'vehicles.plate_number', 'vehicles.model')
+            ->orderByDesc('total_usage')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function serviceReminders(array $filters, int $limit = 5): Collection
+    {
+        $threshold = now()->addDays(30)->toDateString();
+
+        return $this->serviceQuery($filters)
+            ->with('vehicle:id,code,plate_number,brand,model')
+            ->whereNotNull('next_service_date')
+            ->whereDate('next_service_date', '<=', $threshold)
+            ->orderBy('next_service_date')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function recentActivityLogs(int $limit = 6): Collection
+    {
+        return ActivityLog::query()
+            ->with('user:id,name')
+            ->latest()
+            ->limit($limit)
+            ->get();
     }
 
     public function monitoring(array $filters): array
@@ -327,25 +437,25 @@ class DashboardMetricsService
 
         $change = (($current - $previous) / $previous) * 100;
 
-        return ($change >= 0 ? '+' : '').number_format($change, 1).'%';
+        return ($change >= 0 ? '+' : '') . number_format($change, 1) . '%';
     }
 
     private function share(int|float $value, int|float $total): string
     {
-        return number_format(($value / max($total, 1)) * 100, 1).'%';
+        return number_format(($value / max($total, 1)) * 100, 1) . '%';
     }
 
     private function vehicleQuery(array $filters): Builder
     {
         return Vehicle::query()
-            ->when($this->filterValue($filters, 'region_id'), fn (Builder $query, int|string $regionId) => $query->where('region_id', $regionId))
-            ->when($this->filterValue($filters, 'vehicle_type_id'), fn (Builder $query, int|string $typeId) => $query->where('vehicle_type_id', $typeId));
+            ->when($this->filterValue($filters, 'region_id'), fn(Builder $query, int|string $regionId) => $query->where('region_id', $regionId))
+            ->when($this->filterValue($filters, 'vehicle_type_id'), fn(Builder $query, int|string $typeId) => $query->where('vehicle_type_id', $typeId));
     }
 
     private function driverQuery(array $filters): Builder
     {
         return Driver::query()
-            ->when($this->filterValue($filters, 'region_id'), fn (Builder $query, int|string $regionId) => $query->where('region_id', $regionId));
+            ->when($this->filterValue($filters, 'region_id'), fn(Builder $query, int|string $regionId) => $query->where('region_id', $regionId));
     }
 
     private function bookingQuery(array $filters): Builder
@@ -356,14 +466,14 @@ class DashboardMetricsService
     private function fuelQuery(array $filters): Builder
     {
         return FuelLog::query()
-            ->when($this->filterValue($filters, 'vehicle_id'), fn (Builder $query, int|string $vehicleId) => $query->where('vehicle_id', $vehicleId))
-            ->whereHas('vehicle', fn (Builder $vehicle) => $this->applyVehicleFilters($vehicle, $filters));
+            ->when($this->filterValue($filters, 'vehicle_id'), fn(Builder $query, int|string $vehicleId) => $query->where('vehicle_id', $vehicleId))
+            ->whereHas('vehicle', fn(Builder $vehicle) => $this->applyVehicleFilters($vehicle, $filters));
     }
 
     private function serviceQuery(array $filters): Builder
     {
         return VehicleService::query()
-            ->whereHas('vehicle', fn (Builder $vehicle) => $this->applyVehicleFilters($vehicle, $filters));
+            ->whereHas('vehicle', fn(Builder $vehicle) => $this->applyVehicleFilters($vehicle, $filters));
     }
 
     private function applyBookingFilters(Builder $query, array $filters): Builder
@@ -376,16 +486,16 @@ class DashboardMetricsService
                 $query->whereMonth('departure_date', $month)
                     ->whereYear('departure_date', $this->year($filters));
             })
-            ->when($this->filterValue($filters, 'year'), fn (Builder $query, int|string $year) => $query->whereYear('departure_date', $year))
-            ->when($this->filterValue($filters, 'vehicle_id'), fn (Builder $query, int|string $vehicleId) => $query->where('vehicle_id', $vehicleId))
-            ->whereHas('vehicle', fn (Builder $vehicle) => $this->applyVehicleFilters($vehicle, $filters));
+            ->when($this->filterValue($filters, 'year'), fn(Builder $query, int|string $year) => $query->whereYear('departure_date', $year))
+            ->when($this->filterValue($filters, 'vehicle_id'), fn(Builder $query, int|string $vehicleId) => $query->where('vehicle_id', $vehicleId))
+            ->whereHas('vehicle', fn(Builder $vehicle) => $this->applyVehicleFilters($vehicle, $filters));
     }
 
     private function applyVehicleFilters(Builder $query, array $filters): Builder
     {
         return $query
-            ->when($this->filterValue($filters, 'region_id'), fn (Builder $query, int|string $regionId) => $query->where('region_id', $regionId))
-            ->when($this->filterValue($filters, 'vehicle_type_id'), fn (Builder $query, int|string $typeId) => $query->where('vehicle_type_id', $typeId));
+            ->when($this->filterValue($filters, 'region_id'), fn(Builder $query, int|string $regionId) => $query->where('region_id', $regionId))
+            ->when($this->filterValue($filters, 'vehicle_type_id'), fn(Builder $query, int|string $typeId) => $query->where('vehicle_type_id', $typeId));
     }
 
     private function filterValue(array $filters, string $key): mixed

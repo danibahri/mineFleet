@@ -11,10 +11,12 @@
 
             @include('partials.header')
 
-            <flux:main class="p-0 lg:p-0">
+            <flux:main class="bg-white dark:bg-slate-950/70">
                 {{ $slot }}
             </flux:main>
         </div>
+
+        <flux:toast />
 
         @livewireScripts
         @fluxScripts

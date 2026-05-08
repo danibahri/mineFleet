@@ -6,18 +6,18 @@ use App\Services\DashboardMetricsService;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
-class TopVehiclesChart extends Component
+class ServiceReminder extends Component
 {
     public array $filters = [];
 
     #[Computed]
-    public function chart(): array
+    public function reminders()
     {
-        return app(DashboardMetricsService::class)->topVehicles($this->filters);
+        return app(DashboardMetricsService::class)->serviceReminders($this->filters);
     }
 
     public function render()
     {
-        return view('livewire.dashboard.top-vehicles-chart');
+        return view('components.dashboard.service-reminder');
     }
 }

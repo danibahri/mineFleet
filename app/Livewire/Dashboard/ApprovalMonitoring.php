@@ -3,10 +3,11 @@
 namespace App\Livewire\Dashboard;
 
 use App\Services\DashboardMetricsService;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class RecentBookingsTable extends Component
+class ApprovalMonitoring extends Component
 {
     use WithPagination;
 
@@ -15,6 +16,8 @@ class RecentBookingsTable extends Component
     public string $search = '';
 
     public string $status = '';
+
+    public int $perPage = 6;
 
     public function updatingSearch(): void
     {
@@ -26,12 +29,16 @@ class RecentBookingsTable extends Component
         $this->resetPage();
     }
 
+    #[Computed]
+    public function approvals()
+    {
+        return app(DashboardMetricsService::class)
+            ->approvalMonitoring($this->filters, $this->search, $this->status)
+            ->paginate($this->perPage);
+    }
+
     public function render()
     {
-        return view('livewire.dashboard.recent-bookings-table', [
-            'bookings' => app(DashboardMetricsService::class)
-                ->recentBookings($this->filters, trim($this->search), $this->status)
-                ->paginate(6),
-        ]);
+        return view('components.dashboard.approval-monitoring');
     }
 }

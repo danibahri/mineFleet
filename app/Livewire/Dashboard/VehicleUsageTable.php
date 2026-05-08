@@ -6,18 +6,18 @@ use App\Services\DashboardMetricsService;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
-class FuelConsumptionChart extends Component
+class VehicleUsageTable extends Component
 {
     public array $filters = [];
 
     #[Computed]
-    public function chart(): array
+    public function rows()
     {
-        return app(DashboardMetricsService::class)->fuelByMonth($this->filters);
+        return app(DashboardMetricsService::class)->vehicleUsageTable($this->filters);
     }
 
     public function render()
     {
-        return view('livewire.dashboard.fuel-consumption-chart');
+        return view('components.dashboard.vehicle-usage-table');
     }
 }

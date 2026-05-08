@@ -13,11 +13,11 @@ class SummaryCards extends Component
     #[Computed]
     public function cards(): array
     {
-        return app(DashboardMetricsService::class)->summaryCards($this->filters);
+        return app(DashboardMetricsService::class)->dashboardSummary($this->filters);
     }
 
     public function render()
     {
-        return view('livewire.dashboard.summary-cards');
+        return view('components.dashboard.summary-cards');
     }
 }
