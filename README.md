@@ -30,17 +30,17 @@
 
 ---
 
-## 👥 Role & Hak Akses
+## Role & Hak Akses
 
-### 🟣 Admin
+### Admin
 
 Akses penuh ke seluruh sistem: dashboard, kendaraan, driver, booking, approval, BBM, service, laporan, activity logs, user management, dan settings.
 
-### 🔵 Approver Level 1
+### Approver Level 1
 
 Melakukan validasi awal booking: lihat daftar booking, approve/reject, beri catatan, lihat riwayat approval pribadi.
 
-### 🔵 Approver Level 2
+### Approver Level 2
 
 Memberikan persetujuan final booking yang telah disetujui Level 1: final approve/reject, beri catatan, lihat riwayat.
 
