@@ -13,12 +13,12 @@
     <flux:button variant="{{ $variant }}" size="{{ $size }}">{{ $buttonLabel }}</flux:button>
 </flux:modal.trigger>
 
-<flux:modal name="{{ $name }}" class="min-w-[22rem]">
+<flux:modal name="{{ $name }}" class="min-w-[22rem] text-left">
     <div class="space-y-6">
-        <div>
-            <flux:heading size="lg">{{ $title }}</flux:heading>
+        <div class="mt-6">
+            <flux:heading size="lg" class="text-left">{{ $title }}</flux:heading>
 
-            <flux:text class="mt-2">
+            <flux:text class="mt-2 text-left">
                 {!! nl2br(e($message)) !!}
             </flux:text>
         </div>
@@ -27,10 +27,11 @@
             <flux:spacer />
 
             <flux:modal.close>
-                <flux:button variant="ghost">{{ $cancelLabel }}</flux:button>
+                <flux:button variant="ghost" size="{{ $size }}">{{ $cancelLabel }}</flux:button>
             </flux:modal.close>
 
-            <flux:button type="button" variant="danger" {{ $attributes }}>{{ $confirmLabel }}</flux:button>
+            <flux:button type="button" variant="{{ $variant }}" size="{{ $size }}" {{ $attributes }}>
+                {{ $confirmLabel }}</flux:button>
         </div>
     </div>
 </flux:modal>

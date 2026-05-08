@@ -14,6 +14,7 @@ class Index extends Component
 {
     use WithPagination;
 
+    // ── Filters ──────────────────────────────────────────────────────────────
     public string $search = '';
     public string $status = '';
     public string $ownership = '';
@@ -21,6 +22,10 @@ class Index extends Component
     public string $vehicleTypeId = '';
     public int $perPage = 10;
 
+    // ── Modal ─────────────────────────────────────────────────────────────────
+    public string $activeModal = ''; // 'form'
+
+    // ── Form fields ──────────────────────────────────────────────────────────
     public ?int $vehicleId = null;
     public string $code = '';
     public string $plateNumber = '';
@@ -36,31 +41,14 @@ class Index extends Component
     public string $formRegionId = '';
     public string $formVehicleTypeId = '';
 
-    public function updatingSearch(): void
-    {
-        $this->resetPage();
-    }
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+    public function updatingSearch(): void { $this->resetPage(); }
+    public function updatingStatus(): void { $this->resetPage(); }
+    public function updatingOwnership(): void { $this->resetPage(); }
+    public function updatingRegionId(): void { $this->resetPage(); }
+    public function updatingVehicleTypeId(): void { $this->resetPage(); }
 
-    public function updatingStatus(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingOwnership(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingRegionId(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatingVehicleTypeId(): void
-    {
-        $this->resetPage();
-    }
-
+    // ── Computed ─────────────────────────────────────────────────────────────
     #[Computed]
     public function vehicles()
     {
@@ -101,98 +89,117 @@ class Index extends Component
     {
         return [
             'available' => 'Available',
-            'booked' => 'In Use',
-            'service' => 'Maintenance',
-            'inactive' => 'Inactive',
+            'booked'    => 'In Use',
+            'service'   => 'Maintenance',
+            'inactive'  => 'Inactive',
         ];
     }
 
-    public function edit(int $id): void
+    // ── Modal ─────────────────────────────────────────────────────────────────
+    public function openCreateForm(): void
+    {
+        $this->resetForm();
+        $this->activeModal = 'form';
+    }
+
+    public function openEditForm(int $id): void
     {
         $vehicle = Vehicle::query()->findOrFail($id);
 
-        $this->vehicleId = $vehicle->id;
-        $this->code = (string) $vehicle->code;
-        $this->plateNumber = (string) $vehicle->plate_number;
-        $this->brand = (string) $vehicle->brand;
-        $this->model = (string) $vehicle->model;
-        $this->year = (string) $vehicle->year;
-        $this->ownershipType = (string) $vehicle->ownership_type;
-        $this->statusValue = (string) $vehicle->status;
-        $this->fuelType = (string) ($vehicle->fuel_type ?? '');
-        $this->fuelConsumption = (string) ($vehicle->fuel_consumption ?? '');
-        $this->odometer = (string) ($vehicle->odometer ?? '');
-        $this->notes = (string) ($vehicle->notes ?? '');
-        $this->formRegionId = (string) $vehicle->region_id;
+        $this->vehicleId        = $vehicle->id;
+        $this->code             = (string) $vehicle->code;
+        $this->plateNumber      = (string) $vehicle->plate_number;
+        $this->brand            = (string) $vehicle->brand;
+        $this->model            = (string) $vehicle->model;
+        $this->year             = (string) $vehicle->year;
+        $this->ownershipType    = (string) $vehicle->ownership_type;
+        $this->statusValue      = (string) $vehicle->status;
+        $this->fuelType         = (string) ($vehicle->fuel_type ?? '');
+        $this->fuelConsumption  = (string) ($vehicle->fuel_consumption ?? '');
+        $this->odometer         = (string) ($vehicle->odometer ?? '');
+        $this->notes            = (string) ($vehicle->notes ?? '');
+        $this->formRegionId     = (string) $vehicle->region_id;
         $this->formVehicleTypeId = (string) $vehicle->vehicle_type_id;
+
+        $this->activeModal = 'form';
     }
 
-    public function createForm(): void
+    public function closeModal(): void
     {
-        $this->vehicleId = null;
-        $this->code = '';
-        $this->plateNumber = '';
-        $this->brand = '';
-        $this->model = '';
-        $this->year = '';
-        $this->ownershipType = 'company';
-        $this->statusValue = 'available';
-        $this->fuelType = '';
-        $this->fuelConsumption = '';
-        $this->odometer = '';
-        $this->notes = '';
-        $this->formRegionId = '';
-        $this->formVehicleTypeId = '';
+        $this->activeModal = '';
+        $this->resetForm();
     }
 
+    // ── CRUD ──────────────────────────────────────────────────────────────────
     public function save(): void
     {
-        $maxYear = now()->year + 1;
+        $maxYear  = now()->year + 1;
         $isUpdate = $this->vehicleId !== null;
 
         $validated = $this->validate([
-            'code' => ['required', 'string', 'max:50', 'unique:vehicles,code,' . ($this->vehicleId ?? 'NULL') . ',id'],
-            'plateNumber' => ['required', 'string', 'max:50', 'unique:vehicles,plate_number,' . ($this->vehicleId ?? 'NULL') . ',id'],
-            'brand' => ['required', 'string', 'max:50'],
-            'model' => ['required', 'string', 'max:50'],
-            'year' => ['required', 'integer', 'min:1990', 'max:' . $maxYear],
-            'ownershipType' => ['required', 'in:company,rental'],
-            'statusValue' => ['required', 'in:available,booked,service,inactive'],
-            'fuelType' => ['nullable', 'string', 'max:50'],
+            'code'            => ['required', 'string', 'max:50', 'unique:vehicles,code,' . ($this->vehicleId ?? 'NULL') . ',id'],
+            'plateNumber'     => ['required', 'string', 'max:50', 'unique:vehicles,plate_number,' . ($this->vehicleId ?? 'NULL') . ',id'],
+            'brand'           => ['required', 'string', 'max:50'],
+            'model'           => ['required', 'string', 'max:50'],
+            'year'            => ['required', 'integer', 'min:1990', 'max:' . $maxYear],
+            'ownershipType'   => ['required', 'in:company,rental'],
+            'statusValue'     => ['required', 'in:available,booked,service,inactive'],
+            'fuelType'        => ['nullable', 'string', 'max:50'],
             'fuelConsumption' => ['nullable', 'numeric', 'min:0'],
-            'odometer' => ['nullable', 'integer', 'min:0'],
-            'notes' => ['nullable', 'string', 'max:500'],
-            'formRegionId' => ['required', 'exists:regions,id'],
+            'odometer'        => ['nullable', 'integer', 'min:0'],
+            'notes'           => ['nullable', 'string', 'max:500'],
+            'formRegionId'    => ['required', 'exists:regions,id'],
             'formVehicleTypeId' => ['required', 'exists:vehicle_types,id'],
         ]);
 
         Vehicle::query()->updateOrCreate(
             ['id' => $this->vehicleId],
             [
-                'code' => $validated['code'],
-                'plate_number' => $validated['plateNumber'],
-                'brand' => $validated['brand'],
-                'model' => $validated['model'],
-                'year' => (int) $validated['year'],
-                'ownership_type' => $validated['ownershipType'],
-                'status' => $validated['statusValue'],
-                'fuel_type' => $validated['fuelType'] !== '' ? $validated['fuelType'] : null,
+                'code'             => $validated['code'],
+                'plate_number'     => $validated['plateNumber'],
+                'brand'            => $validated['brand'],
+                'model'            => $validated['model'],
+                'year'             => (int) $validated['year'],
+                'ownership_type'   => $validated['ownershipType'],
+                'status'           => $validated['statusValue'],
+                'fuel_type'        => $validated['fuelType'] !== '' ? $validated['fuelType'] : null,
                 'fuel_consumption' => $validated['fuelConsumption'] !== '' ? (float) $validated['fuelConsumption'] : null,
-                'odometer' => $validated['odometer'] !== '' ? (int) $validated['odometer'] : 0,
-                'notes' => $validated['notes'] !== '' ? $validated['notes'] : null,
-                'region_id' => $validated['formRegionId'],
-                'vehicle_type_id' => $validated['formVehicleTypeId'],
+                'odometer'         => $validated['odometer'] !== '' ? (int) $validated['odometer'] : 0,
+                'notes'            => $validated['notes'] !== '' ? $validated['notes'] : null,
+                'region_id'        => $validated['formRegionId'],
+                'vehicle_type_id'  => $validated['formVehicleTypeId'],
             ]
         );
 
-        $this->createForm();
+        $this->activeModal = '';
+        $this->resetForm();
+        unset($this->vehicles);
         Flux::toast($isUpdate ? 'Kendaraan berhasil diperbarui.' : 'Kendaraan berhasil ditambahkan.');
     }
 
     public function delete(int $id): void
     {
         Vehicle::query()->findOrFail($id)->delete();
+        unset($this->vehicles);
         Flux::toast('Kendaraan berhasil dihapus.');
+    }
+
+    private function resetForm(): void
+    {
+        $this->vehicleId         = null;
+        $this->code              = '';
+        $this->plateNumber       = '';
+        $this->brand             = '';
+        $this->model             = '';
+        $this->year              = '';
+        $this->ownershipType     = 'company';
+        $this->statusValue       = 'available';
+        $this->fuelType          = '';
+        $this->fuelConsumption   = '';
+        $this->odometer          = '';
+        $this->notes             = '';
+        $this->formRegionId      = '';
+        $this->formVehicleTypeId = '';
     }
 
     public function render()

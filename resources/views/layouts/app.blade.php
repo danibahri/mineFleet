@@ -11,7 +11,7 @@
 
             @include('partials.header')
 
-            <flux:main class="bg-white dark:bg-slate-950/70">
+            <flux:main class="bg-slate-50/70 dark:bg-slate-950/70">
                 {{ $slot }}
             </flux:main>
         </div>

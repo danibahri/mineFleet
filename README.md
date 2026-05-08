@@ -1,59 +1,160 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MineFleet — Vehicle Booking & Fleet Monitoring System
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://img.shields.io/badge/Laravel-13.x-FF2D20?style=flat-square&logo=laravel&logoColor=white" alt="Laravel">
+  <img src="https://img.shields.io/badge/Livewire-4.x-4E56A6?style=flat-square&logo=livewire&logoColor=white" alt="Livewire">
+  <img src="https://img.shields.io/badge/Flux_UI-2.x-10B981?style=flat-square" alt="Flux UI">
+  <img src="https://img.shields.io/badge/TailwindCSS-4.x-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind">
+  <img src="https://img.shields.io/badge/PHP-8.3+-777BB4?style=flat-square&logo=php&logoColor=white" alt="PHP">
 </p>
 
-## About Laravel
+**mineFleet** adalah aplikasi web manajemen armada kendaraan yang dirancang untuk perusahaan tambang. Sistem ini mengintegrasikan pemesanan kendaraan, approval berjenjang, monitoring BBM, jadwal service, dan pelaporan operasional dalam satu platform yang modern dan responsif.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Fitur Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Fitur                              | Deskripsi                                                    |
+| ---------------------------------- | ------------------------------------------------------------ |
+| **Authentication & Authorization** | Login multi-role dengan redirect otomatis per role           |
+| **Vehicle Management**             | CRUD kendaraan operasional lengkap                           |
+| **Driver Management**              | Pengelolaan driver dan SIM                                   |
+| **Vehicle Booking**                | Pemesanan kendaraan dengan validasi double-booking           |
+| **Multi-Level Approval**           | Approval berjenjang (Level 1 → Level 2)                      |
+| **Fuel Monitoring**                | Input & riwayat konsumsi BBM per kendaraan                   |
+| **Service & Maintenance**          | Jadwal service dengan indikator status otomatis              |
+| **Reports & Export**               | Laporan multi-tipe dengan ekspor CSV/Excel                   |
+| **Activity Logs**                  | Audit trail seluruh aktivitas sistem                         |
+| **User Management**                | CRUD pengguna dengan role assignment                         |
+| **Settings**                       | Company profile, approval config, region, kategori kendaraan |
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 👥 Role & Hak Akses
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🟣 Admin
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+Akses penuh ke seluruh sistem: dashboard, kendaraan, driver, booking, approval, BBM, service, laporan, activity logs, user management, dan settings.
 
-## Agentic Development
+### 🔵 Approver Level 1
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Melakukan validasi awal booking: lihat daftar booking, approve/reject, beri catatan, lihat riwayat approval pribadi.
+
+### 🔵 Approver Level 2
+
+Memberikan persetujuan final booking yang telah disetujui Level 1: final approve/reject, beri catatan, lihat riwayat.
+
+---
+
+## Teknologi
+
+- **Backend:** Laravel 13, PHP 8.3+
+- **Frontend:** Livewire 4, Flux UI 2, TailwindCSS 4, Alpine.js
+- **Database:** MySQL / MariaDB
+- **Build Tool:** Vite + pnpm
+
+---
+
+## Instalasi
+
+### Prerequisites
+
+- PHP 8.3+
+- Composer
+- Node.js 20+ & pnpm
+- MySQL / MariaDB
+
+### Langkah Instalasi
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone repository
+git clone https://github.com/your-username/mineFleet.git
+cd mineFleet
 
-php artisan boost:install
+# 2. Install PHP dependencies
+composer install
+
+# 3. Install Node dependencies
+pnpm install
+
+# 4. Setup environment
+cp .env.example .env
+php artisan key:generate
+
+# 5. Konfigurasi database di .env
+# DB_DATABASE=minefleet
+# DB_USERNAME=root
+# DB_PASSWORD=
+
+# 6. Migrasi & seed database
+php artisan migrate --seed
+
+# 7. Build assets
+pnpm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### Development Server
 
-## Contributing
+```bash
+# Terminal 1 — Laravel server
+php artisan serve
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Terminal 2 — Vite dev server
+pnpm run dev
+```
 
-## Code of Conduct
+Aplikasi akan berjalan di: **http://localhost:8000**
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## Demo Credentials
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Role                 | Email                      | Password   |
+| -------------------- | -------------------------- | ---------- |
+| **Admin**            | `admin@minefleet.test`     | `password` |
+| **Approver Level 1** | `approver1@minefleet.test` | `password` |
+| **Approver Level 2** | `approver2@minefleet.test` | `password` |
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# mineFleet
+## Struktur Proyek
+
+```
+mineFleet/
+├── app/
+│   ├── Http/Middleware/       # RoleMiddleware
+│   ├── Livewire/Pages/        # Semua Livewire components
+│   ├── Models/                # Eloquent models
+│   └── Services/              # ActivityLogger service
+├── database/
+│   ├── migrations/            # Schema database
+│   └── seeders/               # Data awal (roles, users, dll)
+├── resources/views/
+│   ├── layouts/               # app.blade.php, auth.blade.php
+│   ├── pages/                 # Halaman per modul
+│   └── partials/              # sidebar, header, head
+└── routes/web.php             # Route dengan middleware auth & role
+```
+
+---
+
+## Alur Sistem Booking
+
+```
+Admin → Buat Booking → Pilih Driver & Approver
+    ↓
+Approver Level 1 → Review → Approve / Reject
+    ↓ (jika disetujui)
+Approver Level 2 → Final Review → Approve / Reject
+    ↓ (jika disetujui final)
+Kendaraan siap digunakan
+```
+
+Seluruh aktivitas tercatat otomatis di **Activity Logs**.
+
+---
+
+## Lisensi
+
+Proyek ini dikembangkan sebagai technical test / portofolio.  
+&copy; 2026 MineFleet

@@ -15,6 +15,7 @@
 
     <flux:spacer />
 
+    {{-- Notification Bell --}}
     <button type="button"
         class="relative inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
         aria-label="Notifications">
@@ -26,6 +27,7 @@
             class="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"></span>
     </button>
 
+    {{-- Dark Mode Toggle --}}
     <flux:dropdown x-data align="end" class="mx-2">
         <flux:button variant="subtle" square class="group" aria-label="Preferred color scheme">
             <flux:icon.sun x-show="$flux.appearance === 'light'" variant="mini" class="text-zinc-500 dark:text-white" />
@@ -41,15 +43,45 @@
         </flux:menu>
     </flux:dropdown>
 
+    {{-- User Dropdown --}}
     <flux:dropdown position="top" align="start">
-        <flux:profile name="Admin Fleet" />
+        <flux:profile name="{{ auth()->user()?->name ?? 'Guest' }}" />
         <flux:menu>
-            <flux:menu.radio.group>
-                <flux:menu.radio checked>Admin Fleet</flux:menu.radio>
-                <flux:menu.radio>Mine Operations</flux:menu.radio>
-            </flux:menu.radio.group>
+            {{-- User info --}}
+            <div class="px-3 py-2">
+                <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ auth()->user()?->name }}</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">{{ auth()->user()?->email }}</p>
+                @php
+                    $roleName = auth()->user()?->role?->name;
+                    $roleLabel = match ($roleName) {
+                        'admin' => 'Admin',
+                        'approver_level_1' => 'Approver Level 1',
+                        'approver_level_2' => 'Approver Level 2',
+                        'driver' => 'Driver',
+                        default => ucfirst($roleName ?? '-'),
+                    };
+                    $roleColor = match ($roleName) {
+                        'admin' => 'bg-violet-50 text-violet-600 dark:bg-violet-500/10 dark:text-violet-300',
+                        'approver_level_1' => 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300',
+                        'approver_level_2' => 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/10 dark:text-cyan-300',
+                        default => 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-400',
+                    };
+                @endphp
+                <span class="{{ $roleColor }} mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold">
+                    {{ $roleLabel }}
+                </span>
+            </div>
             <flux:menu.separator />
-            <flux:menu.item icon="arrow-right-start-on-rectangle">Logout</flux:menu.item>
+            <flux:menu.item icon="user-circle" href="#">Profil Saya</flux:menu.item>
+            <flux:menu.separator />
+
+            {{-- Logout --}}
+            <form method="POST" action="{{ route('logout') }}" x-data>
+                @csrf
+                <flux:menu.item icon="arrow-right-start-on-rectangle" class="text-rose-600 dark:text-rose-400" x-on:click="$el.closest('form').submit()">
+                    Logout
+                </flux:menu.item>
+            </form>
         </flux:menu>
     </flux:dropdown>
 </flux:header>
